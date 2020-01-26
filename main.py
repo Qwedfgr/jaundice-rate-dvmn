@@ -54,7 +54,8 @@ async def process_article(article, morph):
             rate = text_tools.calculate_jaundice_rate(words, charged_words)
             return rate
     except inosmi_ru.ArticleNotFound as e:
+        status = ProcessingStatus.PARSING_ERROR
+    except (aiohttp.ClientConnectorError, aiohttp.ClientResponseError) as e:
         status = ProcessingStatus.FETCH_ERROR
-
 
 asyncio.run(main())
