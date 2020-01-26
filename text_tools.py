@@ -1,5 +1,8 @@
-import pymorphy2
 import string
+from os import listdir
+from os.path import isfile, join
+
+import pymorphy2
 
 
 def _clean_word(word):
@@ -17,6 +20,16 @@ def split_by_words(morph, text):
         normalized_word = morph.parse(cleaned_word)[0].normal_form
         if len(normalized_word) > 2 or normalized_word == 'не':
             words.append(normalized_word)
+    return words
+
+
+def get_charged_words(path):
+    words = []
+    files = [join(path, file) for file in listdir(path)]
+    for file_path in files:
+        with open(file_path, mode='r', encoding='utf-8') as file:
+            text = file.read()
+            words.extend(text.strip().split('\n'))
     return words
 
 
@@ -46,3 +59,4 @@ def calculate_jaundice_rate(article_words, charged_words):
 def test_calculate_jaundice_rate():
     assert -0.01 < calculate_jaundice_rate([], []) < 0.01
     assert 33.0 < calculate_jaundice_rate(['все', 'аутсайдер', 'побег'], ['аутсайдер', 'банкротство']) < 34.0
+    assert 1 < 5
