@@ -1,4 +1,5 @@
 import asyncio
+from enum import Enum
 
 import aiohttp
 import aionursery
@@ -13,6 +14,13 @@ TEST_ARTICLES = [
     'https://inosmi.ru/politic/20200125/246700581.html',
     'https://inosmi.ru/politic/20200125/246700442.html'
 ]
+
+
+class ProcessingStatus(Enum):
+    OK = 'OK'
+    FETCH_ERROR = 'FETCH_ERROR'
+    PARSING_ERROR = 'PARSING_ERROR'
+    TIMEOUT = 'TIMEOUT'
 
 
 async def fetch(session, url):
@@ -37,12 +45,16 @@ async def main():
 
 
 async def process_article(article, morph):
-    async with aiohttp.ClientSession() as session:
-        html = await fetch(session, article)
-        clean_text = inosmi_ru.sanitize(html, True)
-        words = text_tools.split_by_words(morph, clean_text)
-        charged_words = text_tools.get_charged_words('charged_dict/charged_dict')
-        rate = text_tools.calculate_jaundice_rate(words, charged_words)
-        return rate
+    try:
+        async with aiohttp.ClientSession() as session:
+            html = await fetch(session, article)
+            clean_text = inosmi_ru.sanitize(html, True)
+            words = text_tools.split_by_words(morph, clean_text)
+            charged_words = text_tools.get_charged_words('charged_dict/charged_dict')
+            rate = text_tools.calculate_jaundice_rate(words, charged_words)
+            return rate
+    except inosmi_ru.ArticleNotFound as e:
+        status = ProcessingStatus.FETCH_ERROR
+
 
 asyncio.run(main())
