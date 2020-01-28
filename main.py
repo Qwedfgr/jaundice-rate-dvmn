@@ -1,8 +1,8 @@
 import asyncio
+import logging
 import time
 from contextlib import contextmanager
 from enum import Enum
-import logging
 
 import aiohttp
 import aionursery
