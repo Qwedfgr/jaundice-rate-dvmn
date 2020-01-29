@@ -69,7 +69,7 @@ async def process_article(article, morph, session):
         with timeout(0.02):
             with work_timer():
                 words = text_tools.split_by_words(morph, clean_text)
-        charged_words = text_tools.get_charged_words('charged_dict/charged_dict')
+        charged_words = text_tools.get_charged_words('charged_dict')
         rate = text_tools.calculate_jaundice_rate(words, charged_words)
         return rate
     except inosmi_ru.ArticleNotFound as e:
