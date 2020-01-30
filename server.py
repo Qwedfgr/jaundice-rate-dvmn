@@ -1,6 +1,7 @@
-from functools import partial
 import logging
+from functools import partial
 
+import pymorphy2
 from aiohttp import web
 from aiohttp.web_response import json_response
 
