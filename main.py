@@ -48,19 +48,6 @@ def process_result(result):
     pass
 
 
-async def main():
-    logging.basicConfig(level=logging.INFO)
-    morph = pymorphy2.MorphAnalyzer()
-    async with aiohttp.ClientSession() as session:
-        async with aionursery.Nursery() as nursery:
-            tasks = []
-            for article in TEST_ARTICLES:
-                tasks.append(nursery.start_soon(process_article(article, morph, session)))
-                results = await asyncio.wait(tasks)
-            for result in results[0]:
-                print(result.result())
-
-
 async def process_article(article, morph, session):
     try:
         with timeout(3):
