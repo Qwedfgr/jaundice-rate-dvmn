@@ -1,3 +1,4 @@
+aionursery
 aiohttp==3.*
 cchardet==2.*
 aiodns==2.*
