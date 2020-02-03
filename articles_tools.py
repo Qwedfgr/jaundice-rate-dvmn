@@ -5,19 +5,12 @@ from contextlib import contextmanager
 from enum import Enum
 
 import aiohttp
-import aionursery
-import pymorphy2
 from async_timeout import timeout
+import pytest
+import pymorphy2
 
 import text_tools
 from adapters import inosmi_ru
-
-TEST_ARTICLES = [
-    'https://inosmi.ru/social/20200126/246679119.html',
-    'https://inosmi.ru/politic/20200126/246701782.html',
-    'https://inosmi.ru/politic/20200125/246700581.html',
-    'https://inosmi.ru/politic/20200125/246700442.html'
-]
 
 
 class ProcessingStatus(Enum):
@@ -44,11 +37,16 @@ async def fetch(session, url):
         return await response.text()
 
 
-def process_result(result):
-    pass
+def process_result(status, article, score=None, words_count=None):
+    return {
+        'status': status,
+        'url': article,
+        'score': score,
+        'words_count': words_count,
+    }
 
 
-async def process_article(article, morph, session):
+async def process_article(article, morph, session, charged_words):
     try:
         with timeout(3):
             html = await fetch(session, article)
@@ -56,14 +54,17 @@ async def process_article(article, morph, session):
         with timeout(0.02):
             with work_timer():
                 words = text_tools.split_by_words(morph, clean_text)
-        charged_words = text_tools.get_charged_words('charged_dict')
         rate = text_tools.calculate_jaundice_rate(words, charged_words)
-        return rate
+        status = ProcessingStatus.OK
+        return process_result(status, article, rate, len(words))
     except inosmi_ru.ArticleNotFound as e:
         status = ProcessingStatus.PARSING_ERROR
+        return process_result(status, article)
     except (aiohttp.ClientConnectorError, aiohttp.ClientResponseError) as e:
         status = ProcessingStatus.FETCH_ERROR
+        return process_result(status, article)
     except asyncio.TimeoutError as e:
         status = ProcessingStatus.TIMEOUT
+        return process_result(status, article)
 
-asyncio.run(main())
+
