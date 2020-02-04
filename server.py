@@ -1,4 +1,5 @@
 import asyncio
+import json
 import logging
 from functools import partial
 
@@ -11,15 +12,13 @@ from aiohttp.web_response import json_response
 from articles_tools import process_article
 from text_tools import get_charged_words
 
-MAX_URLS_TO_PROCESS = 15
 
-
-async def handle(request, morph, charged_words):
+async def handle(morph, charged_words, request, max_url_to_process=5):
     urls = request.query.get('urls')
     if not urls:
         return json_response(data={'error': 'no articles to process'}, status=400)
     urls_list = urls.split(',')
-    if len(urls_list) > MAX_URLS_TO_PROCESS:
+    if len(urls_list) > max_url_to_process:
         return json_response(data={'error': 'to many articles to process'}, status=400)
 
     async with ClientSession() as session:
@@ -27,10 +26,9 @@ async def handle(request, morph, charged_words):
             tasks = []
             for article in urls_list:
                 tasks.append(nursery.start_soon(process_article(article, morph, session, charged_words)))
-                results = await asyncio.wait(tasks)
-            for result in results[0]:
-                print(result.result())
-    return web.json_response(status=200)
+                results, _ = await asyncio.wait(tasks)
+                data = [result.result() for result in results]
+            return web.json_response(data, status=200)
 
 
 def main():
